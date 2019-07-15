@@ -51,12 +51,15 @@ DriverEntry(IN PDRIVER_OBJECT pDriverObject, IN PUNICODE_STRING pRegisterPath)
 NTSTATUS AddDevice(IN PDRIVER_OBJECT pDriverObject, IN PDEVICE_OBJECT pdo)
 {
 	PAGED_CODE();
-	KdPrint(("HelloWDMAddDevice:Enter\n"));
+	KdPrint(("AddDevice:Enter\n"));
 	PDEVICE_OBJECT fdo;
 	NTSTATUS status;
 	UNICODE_STRING devName;
 	UNICODE_STRING linkName;
 	PDEVICE_EXTENSION pdx;
+	//ULONG buf[128] = { 0 };
+	//REG_MULTI_SZ buf;
+	ULONG length = 0;
 
 	//创建设备
 	RtlInitUnicodeString(&devName, L"\\Device\\MyHelloWDM");
@@ -96,7 +99,10 @@ NTSTATUS AddDevice(IN PDRIVER_OBJECT pDriverObject, IN PDEVICE_OBJECT pdo)
 	fdo->Flags |= DO_BUFFERED_IO | DO_POWER_PAGABLE;
 	fdo->Flags &= ~DO_DEVICE_INITIALIZING;
 
-	KdPrint(("HelloWDMAddDevice:Leave\n"));
+	IoGetDeviceProperty(pdo, DevicePropertyHardwareID, 128, REG_MULTI_SZ, &length);
+	KdPrint(("status = 0x%08x,length = %d\n", status,length));
+
+	KdPrint(("AddDevice:Leave\n"));
 	return status;
 }
 
@@ -105,8 +111,8 @@ VOID Unload(IN PDRIVER_OBJECT pDriverObject)
 {
 	PAGED_CODE();
 	//此卸载例程不做任何事情，交由IRP_MN_REMOVABLE_DEVICE处理
-	KdPrint(("HelloWDMUnload:Enter\n"));
-	KdPrint(("HelloWDMUnload:Leave\n"));
+	KdPrint(("Unload:Enter\n"));
+	KdPrint(("Unload:Leave\n"));
 }
 
 #pragma PAGEDCODE
@@ -114,13 +120,13 @@ NTSTATUS DefaultDispatchRoutine(IN PDEVICE_OBJECT fdo, IN PIRP pIrp)
 {
 	PAGED_CODE();
 	//本层驱动直接处理irp
-	KdPrint(("HelloWDMDefaultDispatchRoutine:Enter\n"));
+	KdPrint(("DefaultDispatchRoutine:Enter\n"));
 
 	pIrp->IoStatus.Status = STATUS_SUCCESS;
 	pIrp->IoStatus.Information = 0;
 	IoCompleteRequest(pIrp, IO_NO_INCREMENT);
 
-	KdPrint(("HelloWDMDefaultDispatchRoutine:Leave\n"));
+	KdPrint(("DefaultDispatchRoutine:Leave\n"));
 	return STATUS_SUCCESS;
 }
 
@@ -167,7 +173,7 @@ NTSTATUS DefaultPnp(IN PDEVICE_OBJECT fdo, IN PIRP pIrp)
 	if (fcn >= arrarysize(fcntab))
 	{
 		status = HandlerPnp(pdx, pIrp);
-		KdPrint(("HelloWDMDefaultPnp:Leave\n"));
+		KdPrint(("DefaultPnp:Leave\n"));
 		return status;
 	}
 	char* fcnName[] =
@@ -201,7 +207,7 @@ NTSTATUS DefaultPnp(IN PDEVICE_OBJECT fdo, IN PIRP pIrp)
 
 	status = (*fcntab[fcn])(pdx, pIrp);
 
-	KdPrint(("HelloWDMDefaultPnp:Leave\n"));
+	KdPrint(("DefaultPnp:Leave\n"));
 	return status;
 }
 
